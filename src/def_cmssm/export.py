@@ -36,6 +36,7 @@ def export_onnx(model: torch.nn.Module, output_path: Path, input_size=(480, 640)
             "segmentation": {0: "batch"},
         },
         opset_version=17,
+        dynamo=False,  # Legacy mode needed for Mamba custom CUDA ops
         do_constant_folding=True,
     )
     print(f"[EXPORT] ONNX -> {output_path} ({output_path.stat().st_size / 1e6:.1f}MB)")
