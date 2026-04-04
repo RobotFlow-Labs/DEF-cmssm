@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 from backbone.efficientvit.models.efficientvit import efficientvit_backbone_b0
@@ -8,6 +9,15 @@ from backbone.efficientvit.models.efficientvit import efficientvit_backbone_l0
 from backbone.efficientvit.models.efficientvit import efficientvit_backbone_l1
 from backbone.efficientvit.models.efficientvit import efficientvit_backbone_l2
 
+
+def _weight_path(filename):
+    """Resolve pretrained weight path from env or default location."""
+    base = os.environ.get(
+        "CMSSM_WEIGHTS_DIR",
+        os.path.join(os.path.dirname(__file__), "..", "..", "weights", "backbone"),
+    )
+    return os.path.join(base, filename)
+
 class Encoder_RGBT_Efficientvit(nn.Module):
     def __init__(self, mode):
         super(Encoder_RGBT_Efficientvit, self).__init__()
@@ -15,49 +25,37 @@ class Encoder_RGBT_Efficientvit(nn.Module):
         if mode == 'b0':
             self.enc_rgb = efficientvit_backbone_b0()
             self.enc_t = efficientvit_backbone_b0()
-            self.enc_rgb.init_weights(
-                pretrained="/home/ubuntu/code/backbone/efficientvit/efficientvit_seg_b0_cityscapes.pt")
-            self.enc_t.init_weights(
-                pretrained="/home/ubuntu/code/backbone/efficientvit/efficientvit_seg_b0_cityscapes.pt")
+            self.enc_rgb.init_weights(pretrained=_weight_path("efficientvit_seg_b0_cityscapes.pt"))
+            self.enc_t.init_weights(pretrained=_weight_path("efficientvit_seg_b0_cityscapes.pt"))
         if mode == 'b1':
             self.enc_rgb = efficientvit_backbone_b1()
             self.enc_t = efficientvit_backbone_b1()
-            self.enc_rgb.init_weights(
-                pretrained="/home/ubuntu/code/backbone/efficientvit/efficientvit_b1_r288.pt")
-            self.enc_t.init_weights(
-                pretrained="/home/ubuntu/code/backbone/efficientvit/efficientvit_b1_r288.pt")
+            self.enc_rgb.init_weights(pretrained=_weight_path("efficientvit_b1_r288.pt"))
+            self.enc_t.init_weights(pretrained=_weight_path("efficientvit_b1_r288.pt"))
 
         if mode == 'b2':
             self.enc_rgb = efficientvit_backbone_b2()
             self.enc_t = efficientvit_backbone_b2()
-            self.enc_rgb.init_weights(
-                pretrained="/home/ubuntu/code/backbone/efficientvit/efficientvit_b2_r288.pt")
-            self.enc_t.init_weights(
-                pretrained="/home/ubuntu/code/backbone/efficientvit/efficientvit_b2_r288.pt")
+            self.enc_rgb.init_weights(pretrained=_weight_path("efficientvit_b2_r288.pt"))
+            self.enc_t.init_weights(pretrained=_weight_path("efficientvit_b2_r288.pt"))
 
         if mode == 'b3':
             self.enc_rgb = efficientvit_backbone_b3()
             self.enc_t = efficientvit_backbone_b3()
-            self.enc_rgb.init_weights(
-                pretrained="/home/ubuntu/code/backbone/efficientvit/efficientvit_b3_r288.pt")
-            self.enc_t.init_weights(
-                pretrained="/home/ubuntu/code/backbone/efficientvit/efficientvit_b3_r288.pt")
+            self.enc_rgb.init_weights(pretrained=_weight_path("efficientvit_b3_r288.pt"))
+            self.enc_t.init_weights(pretrained=_weight_path("efficientvit_b3_r288.pt"))
 
         if mode == 'l1':
             self.enc_rgb = efficientvit_backbone_l1()
             self.enc_t = efficientvit_backbone_l1()
-            self.enc_rgb.init_weights(
-                pretrained="/root/autodl-tmp/code/backbone/Efficientvit/efficientvit_l1_r224.pt")
-            self.enc_t.init_weights(
-                pretrained="/root/autodl-tmp/code/backbone/Efficientvit/efficientvit_l1_r224.pt")
+            self.enc_rgb.init_weights(pretrained=_weight_path("efficientvit_l1_r224.pt"))
+            self.enc_t.init_weights(pretrained=_weight_path("efficientvit_l1_r224.pt"))
 
         if mode == 'l2':
             self.enc_rgb = efficientvit_backbone_l2()
             self.enc_t = efficientvit_backbone_l2()
-            self.enc_rgb.init_weights(
-                pretrained="/root/autodl-tmp/code/backbone/Efficientvit/efficientvit_l2_r384.pt")
-            self.enc_t.init_weights(
-                pretrained="/root/autodl-tmp/code/backbone/Efficientvit/efficientvit_l2_r384.pt")
+            self.enc_rgb.init_weights(pretrained=_weight_path("efficientvit_l2_r384.pt"))
+            self.enc_t.init_weights(pretrained=_weight_path("efficientvit_l2_r384.pt"))
 
 
     def forward(self, rgb, t=None):
@@ -75,34 +73,26 @@ class Encoder_Efficientvit(nn.Module):
         # [16, 32, 64, 128]  Flops 608.01 MMac Params 682.61 k
         if mode == 'b0':
             self.enc_rgb = efficientvit_backbone_b0()
-            self.enc_rgb.init_weights(
-                pretrained="/root/autodl-tmp/code/backbone/Efficientvit/efficientvit_seg_b0_cityscapes.pt"
-                )
+            self.enc_rgb.init_weights(pretrained=_weight_path("efficientvit_seg_b0_cityscapes.pt"))
         if mode == 'b1':
             self.enc_rgb = efficientvit_backbone_b1()
-            self.enc_rgb.init_weights(
-                pretrained="/home/ubuntu/code/backbone/efficientvit/efficientvit_b1_r288.pt")
+            self.enc_rgb.init_weights(pretrained=_weight_path("efficientvit_b1_r288.pt"))
 
         if mode == 'b2':
             self.enc_rgb = efficientvit_backbone_b2()
-            self.enc_rgb.init_weights(
-                pretrained="/home/ubuntu/code/backbone/efficientvit/efficientvit_b2_r288.pt")
+            self.enc_rgb.init_weights(pretrained=_weight_path("efficientvit_b2_r288.pt"))
 
         if mode == 'b3':
             self.enc_rgb = efficientvit_backbone_b3()
-            self.enc_rgb.init_weights(
-                pretrained="/home/ubuntu/code/backbone/efficientvit/efficientvit_b3_r288.pt")
-
+            self.enc_rgb.init_weights(pretrained=_weight_path("efficientvit_b3_r288.pt"))
 
         if mode == 'l1':
             self.enc_rgb = efficientvit_backbone_l1()
-            self.enc_rgb.init_weights(
-                pretrained="/root/autodl-tmp/code/backbone/Efficientvit/efficientvit_l1_r224.pt")
+            self.enc_rgb.init_weights(pretrained=_weight_path("efficientvit_l1_r224.pt"))
 
         if mode == 'l2':
             self.enc_rgb = efficientvit_backbone_l2()
-            self.enc_rgb.init_weights(
-                pretrained="/root/autodl-tmp/code/backbone/Efficientvit/efficientvit_l2_r384.pt")
+            self.enc_rgb.init_weights(pretrained=_weight_path("efficientvit_l2_r384.pt"))
 
 
     def forward(self, rgb):

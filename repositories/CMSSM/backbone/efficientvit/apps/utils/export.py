@@ -5,10 +5,14 @@
 import io
 import os
 
-import onnx
 import torch
 import torch.nn as nn
-from onnxsim import simplify as simplify_func
+try:
+    import onnx
+    from onnxsim import simplify as simplify_func
+except ImportError:
+    onnx = None
+    simplify_func = None
 
 __all__ = ["export_onnx"]
 

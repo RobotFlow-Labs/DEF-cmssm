@@ -76,18 +76,21 @@ class PST900(data.Dataset):
 
         label = Image.open(os.path.join(self.root, str(self.mode), 'labels', image_path + '.png'))
 
-        bound = Image.open(os.path.join(self.root, str(self.mode), 'bound', image_path + '.png'))
-        edge = Image.open(os.path.join(self.root, str(self.mode), 'bound', image_path + '.png'))
-        binary_label = Image.open(os.path.join(self.root, str(self.mode), 'binary_labels', image_path + '.png'))
-
         sample = {
             'image': image,
             'thermal': thermal,
             'label': label,
-            'bound': bound,
-            'edge': edge,
-            'binary_label': binary_label,
         }
+
+        # Optional auxiliary labels (not always available)
+        bound_path = os.path.join(self.root, str(self.mode), 'bound', image_path + '.png')
+        if os.path.exists(bound_path):
+            bound = Image.open(bound_path)
+            sample['bound'] = bound
+            sample['edge'] = bound
+        binary_path = os.path.join(self.root, str(self.mode), 'binary_labels', image_path + '.png')
+        if os.path.exists(binary_path):
+            sample['binary_label'] = Image.open(binary_path)
 
         sample = self.resize(sample)  #
 
@@ -98,9 +101,11 @@ class PST900(data.Dataset):
         sample['thermal'] = self.dp_to_tensor(sample['thermal'])
         sample['label'] = torch.from_numpy(np.asarray(sample['label'], dtype=np.int64)).long()
 
-        sample['bound'] = torch.from_numpy(np.asarray(sample['bound'], dtype=np.int64) / 255.).long()
-        sample['edge'] = torch.from_numpy(np.asarray(sample['edge'], dtype=np.int64) / 255.).long()
-        sample['binary_label'] = torch.from_numpy(np.asarray(sample['binary_label'], dtype=np.int64) / 255.).long()
+        if 'bound' in sample:
+            sample['bound'] = torch.from_numpy(np.asarray(sample['bound'], dtype=np.int64) / 255.).long()
+            sample['edge'] = torch.from_numpy(np.asarray(sample['edge'], dtype=np.int64) / 255.).long()
+        if 'binary_label' in sample:
+            sample['binary_label'] = torch.from_numpy(np.asarray(sample['binary_label'], dtype=np.int64) / 255.).long()
 
         sample['label_path'] = image_path.strip().split('/')[-1]  # 后期保存预测图时的文件名和label文件名一致
         return sample

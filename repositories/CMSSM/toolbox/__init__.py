@@ -48,22 +48,34 @@ def get_model(cfg):
     model_name = str(cfg.get("model_name", "")).strip().lower()
     n_classes = int(cfg["n_classes"])
     inputs = cfg["inputs"]
+    emb_dim = cfg.get("embed_dim", None)  # Override decoder embed dim if specified
 
     from models.CM_SSM import Model
 
+    def _make(mode, fusion_mode):
+        m = Model(mode=mode, n_class=n_classes, inputs=inputs, fusion_mode=fusion_mode)
+        if emb_dim is not None:
+            # Rebuild decoder with custom embed dim
+            from models.decoder.MLP import Decoder_MLP
+            channels = {"b0": [16,32,64,128], "b1": [32,64,128,256], "b2": [48,96,192,384],
+                        "b3": [64,128,256,512], "l1": [64,128,256,512], "l2": [64,128,256,512]}
+            ch = channels.get(mode, [32,64,128,256])
+            m.decoder = Decoder_MLP(in_channels=ch, embed_dim=emb_dim, num_classes=n_classes)
+        return m
+
     if model_name == "b1_add":
-        return Model(mode="b1", n_class=n_classes, inputs=inputs, fusion_mode="add")
+        return _make("b1", "add")
 
     if model_name in {"b1_cm-ssm", "b1_cm_ssm", "b1cmssm", "model1_b1_mamba4"}:
-        return Model(mode="b1", n_class=n_classes, inputs=inputs, fusion_mode="CM-SSM")
+        return _make("b1", "CM-SSM")
 
     if model_name in {"b1_m-ssm", "b1_m_ssm"}:
-        return Model(mode="b1", n_class=n_classes, inputs=inputs, fusion_mode="M-SSM")
+        return _make("b1", "M-SSM")
 
     if model_name == "b1_cat":
-        return Model(mode="b1", n_class=n_classes, inputs=inputs, fusion_mode="cat")
+        return _make("b1", "cat")
 
     if model_name == "b1_max":
-        return Model(mode="b1", n_class=n_classes, inputs=inputs, fusion_mode="max")
+        return _make("b1", "max")
 
     raise ValueError(f"Unsupported model_name '{cfg.get('model_name')}'")
