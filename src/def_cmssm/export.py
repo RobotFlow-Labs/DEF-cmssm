@@ -74,7 +74,29 @@ def run(args):
         state_dict = ckpt["model"]
     else:
         state_dict = ckpt
-    clean_sd = {k.replace("module.", ""): v for k, v in state_dict.items()}
+    # Remap legacy checkpoint keys
+    clean_sd = {}
+    for k, v in state_dict.items():
+        nk = k.replace("module.", "")
+        if nk.startswith("fusion_fusion."):
+            nk = "fusion_module.fusion." + nk[len("fusion_fusion."):]
+        nk = nk.replace(".context_main.", ".context_module.main.")
+        nk = nk.replace(".local_main.", ".local_module.main.")
+        clean_sd[nk] = v
+
+    # Auto-detect embed_dim
+    if "decoder.linear_c4.proj.bias" in clean_sd:
+        ckpt_emb = clean_sd["decoder.linear_c4.proj.bias"].shape[0]
+        model_emb = model.decoder.linear_c4.proj.bias.shape[0]
+        if ckpt_emb != model_emb:
+            from models.decoder.MLP import Decoder_MLP
+            channels = [model.decoder.linear_c1.proj.weight.shape[1],
+                       model.decoder.linear_c2.proj.weight.shape[1],
+                       model.decoder.linear_c3.proj.weight.shape[1],
+                       model.decoder.linear_c4.proj.weight.shape[1]]
+            model.decoder = Decoder_MLP(in_channels=channels, embed_dim=ckpt_emb,
+                                       num_classes=cfg["n_classes"])
+
     model.load_state_dict(clean_sd, strict=False)
     model.to(device)
     model.eval()

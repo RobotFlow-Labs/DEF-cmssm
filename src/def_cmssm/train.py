@@ -22,7 +22,9 @@ _REPO_ROOT = Path(__file__).resolve().parents[2] / "repositories" / "CMSSM"
 sys.path.insert(0, str(_REPO_ROOT))
 
 from toolbox import get_dataset, get_logger, get_model, Ranger, setup_seed
-from toolbox.metrics_CART import averageMeter, runningScore
+from toolbox.metrics_CART import averageMeter
+from toolbox.metrics_CART import runningScore as runningScore_CART
+from toolbox.metrics_PST900 import runningScore as runningScore_PST900
 from Loss.dice import DiceLoss
 
 
@@ -230,7 +232,8 @@ def run(args):
     # Metrics
     train_loss_meter = averageMeter()
     test_loss_meter = averageMeter()
-    running_metrics = runningScore(cfg["n_classes"], ignore_index=cfg.get("id_unlabel"))
+    MetricsClass = runningScore_CART if dataset_name == "cart" else runningScore_PST900
+    running_metrics = MetricsClass(cfg["n_classes"], ignore_index=cfg.get("id_unlabel"))
     best_miou = 0.0
     global_step = start_epoch * len(train_loader)
 
