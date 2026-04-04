@@ -1,0 +1,8 @@
+component,cuda_time_ms,percent,total_calls,notes
+encoder_rgb,,,,
+encoder_thermal,,,,
+cm_ssm_stage1,,,,
+cm_ssm_stage2,,,,
+cm_ssm_stage3,,,,
+cm_ssm_stage4,,,,
+decoder,,,,

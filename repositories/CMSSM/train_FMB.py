@@ -14,7 +14,7 @@ from toolbox import get_model
 from toolbox.metrics_FMB import averageMeter, runningScore
 from toolbox import ClassWeight, save_ckpt
 from toolbox import Ranger
-from toolbox import setup_seed
+from toolbox import setup_seed, unwrap_logits
 from Loss.dice import DiceLoss
 
 
@@ -116,9 +116,9 @@ def run(args):
 
             with amp.autocast():
                 if cfg['inputs'] == 't':
-                    predict = model(thermal)
+                    predict = unwrap_logits(model(thermal))
                 else:
-                    predict = model(image, thermal)[-1]
+                    predict = unwrap_logits(model(image, thermal))
                 loss = train_criterion(predict, targets)
             Scaler.scale(loss).backward()
             Scaler.step(optimizer)
@@ -139,9 +139,9 @@ def run(args):
                 thermal = sample['thermal'].cuda()
                 label = sample['label'].cuda()
                 if cfg['inputs'] == 't':
-                    predict = model(thermal)
+                    predict = unwrap_logits(model(thermal))
                 else:
-                    predict = model(image, thermal)[-1]
+                    predict = unwrap_logits(model(image, thermal))
 
                 loss = criterion(predict, label)
                 test_loss_meter.update(loss.item())
@@ -179,7 +179,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description="config")
-    parser.add_argument("--config", type=str, default="/home/ubuntu/code/wild/configs/FMB.json", help="Configuration file to use")
+    parser.add_argument("--config", type=str, default="configs/FMB.json", help="Configuration file to use")
     parser.add_argument("--opt_level", type=str, default='O1')
     parser.add_argument("--inputs", type=str.lower, default='rgbt', choices=['rgb', 'rgbt', 't'])
     parser.add_argument("--resume", type=str, default='',

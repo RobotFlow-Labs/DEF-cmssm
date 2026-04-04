@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "def-cmssm"
+version = "0.1.0"
+description = "ANIMA DEF-cmssm scaffolding for CM-SSM RGB-T segmentation"
+readme = "PRD.md"
+requires-python = ">=3.11"
+authors = [{ name = "AIFLOW LABS" }]
+dependencies = [
+  "numpy>=1.26",
+  "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+cuda = [
+  "torch>=2.4",
+  "torchvision>=0.19",
+  "timm>=1.0",
+  "einops>=0.8",
+]
+mlx = [
+  "mlx>=0.22",
+  "mlx-lm>=0.20",
+]
+dev = [
+  "ruff>=0.7",
+  "mypy>=1.12",
+]
+
+[project.scripts]
+anima-autopilot = "def_cmssm.pipelines.scaffold:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/def_cmssm"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

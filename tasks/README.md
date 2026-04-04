@@ -1,4 +1,6 @@
 # Tasks — DEF-cmssm
+# NOTE (2026-04-04): execution-ready task slices are now available under `tasks/slices/`.
+# See `tasks/ROADMAP.md` for dependency order and active phase.
 # CM-SSM: Cross-Modal State Space Modeling for RGB-T Semantic Segmentation
 # Paper: IROS 2025 | ArXiv: 2506.17869 | Journal: IEEE TASE (with KD)
 # Author: Xiaodong Guo et al. (same as DEF-tuni)

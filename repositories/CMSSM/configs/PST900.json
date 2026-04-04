@@ -1,5 +1,5 @@
 {
-    "model_name": "model1_b1_Mamba4",
+    "model_name": "b1_CM-SSM",
     "inputs": "rgbt",
     "dataset": "pst900",
     "root": "/root/autodl-tmp/dataset/PST900/PST900_RGBT_Dataset/",

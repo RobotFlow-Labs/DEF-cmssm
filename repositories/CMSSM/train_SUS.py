@@ -14,7 +14,7 @@ from toolbox import get_model
 from toolbox.metrics_SUS import averageMeter, runningScore
 from toolbox import ClassWeight, save_ckpt
 from toolbox import Ranger, AdamW
-from toolbox import setup_seed
+from toolbox import setup_seed, unwrap_logits
 from Loss.dice import DiceLoss
 
 setup_seed(33)
@@ -112,19 +112,19 @@ def run(args):
             if cfg['inputs'] == 'rgb':
                 image = sample['image'].cuda()
                 label = sample['label'].cuda()
-                thermal = sample['thermal'].cuda()
-                bound = sample['boundary'].cuda()
-                binary = sample['binary'].cuda()
+                thermal = sample['thermal'].cuda() if 'thermal' in sample else image
+                bound = sample.get('boundary', label).cuda()
+                binary = sample.get('binary', label).cuda()
                 targets = [label, bound, binary]
             else:
                 image = sample['image'].cuda()
                 thermal = sample['thermal'].cuda()
                 label = sample['label'].cuda()
-                bound = sample['boundary'].cuda()
-                binary_label = sample['binary'].cuda()
+                bound = sample.get('boundary', label).cuda()
+                binary_label = sample.get('binary', label).cuda()
                 targets = [label, bound, binary_label]
             with amp.autocast():
-                predict = model(image, thermal)[-1]
+                predict = unwrap_logits(model(image, thermal))
 
                 loss = train_criterion(predict, targets)
 
@@ -145,12 +145,12 @@ def run(args):
                     image = sample['image'].cuda()
                     thermal = sample['thermal'].cuda()
                     label = sample['label'].cuda()
-                    predict = model(image)
+                    predict = unwrap_logits(model(image))
                 else:
                     image = sample['image'].cuda()
                     thermal = sample['thermal'].cuda()
                     label = sample['label'].cuda()
-                    predict = model(image, thermal)[-1]
+                    predict = unwrap_logits(model(image, thermal))
 
 
                 loss = criterion(predict, label)
@@ -190,7 +190,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description="config")
-    parser.add_argument("--config", type=str, default="/home/ubuntu/code/wild/configs/SUS.json", help="Configuration file to use")
+    parser.add_argument("--config", type=str, default="configs/SUS.json", help="Configuration file to use")
     parser.add_argument("--opt_level", type=str, default='O1')
     parser.add_argument("--inputs", type=str.lower, default='rgb', choices=['rgb', 'rgbd'])
     parser.add_argument("--resume", type=str, default='',

@@ -1,0 +1,5 @@
+dataset,backbone,fusion_mode,mIoU,fps,latency_ms,memory_gb,notes
+CART,efficientvit-b1,CM-SSM,,,,,
+PST900,efficientvit-b1,CM-SSM,,,,,
+FMB,convnextv2-atto,CM-SSM,,,,,
+SUS,convnextv2-atto,CM-SSM,,,,,

@@ -11,7 +11,7 @@ import math
 from einops import rearrange, repeat
 from model_others.RGB_T.CMX.models.net_utils import FeatureFusionModule as FFM
 from model_others.RGB_T.CMX.models.net_utils import FeatureRectifyModule as FRM
-from proposed.attention_module import FeatureFusionModule
+from models.attention_module import FeatureFusionModule
 from model_others.RGB_T.MAINet import TSFA
 from model_others.RGB_T.MDNet.model import MultiSpectralAttentionLayer, SS_Conv_SSM
 from backbone.MedMamba import SS2D

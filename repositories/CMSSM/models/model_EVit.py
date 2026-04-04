@@ -1,13 +1,13 @@
 import torch
 import torch.nn as nn
-from proposed.encoder.Efficientvit import Encoder_Efficientvit
-from proposed.encoder.Efficientvit import Encoder_RGBT_Efficientvit
-from proposed.decoder.MLP import Decoder_MLP
-from proposed.decoder.MLP_plus import Decoder_MLP_plus
+from models.encoder.Efficientvit import Encoder_Efficientvit
+from models.encoder.Efficientvit import Encoder_RGBT_Efficientvit
+from models.decoder.MLP import Decoder_MLP
+from models.decoder.MLP_plus import Decoder_MLP_plus
 import torch.nn.functional as F
-# from proposed.fuison_strategy.base_fusion import Fusion_Module
-from proposed.fuison_strategy.fusion import Fusion_Module
-from proposed.decoder.DeepLabV3 import DeepLabHeadV3Plus
+# from models.fuison_strategy.base_fusion import Fusion_Module
+from models.fuison_strategy.fusion import Fusion_Module
+from models.decoder.DeepLabV3 import DeepLabHeadV3Plus
 
 class Model(nn.Module):
     def __init__(self, mode, inputs, n_class=9, fusion_mode='max', share_weights=False):

@@ -240,6 +240,61 @@ def setup_seed(seed):
     torch.backends.cudnn.benchmark = False
 
 
+def unwrap_logits(output):
+    """Extract segmentation logits tensor from heterogeneous model outputs."""
+    if torch.is_tensor(output):
+        return output
+
+    if isinstance(output, dict):
+        for key in ("sem", "logits", "out", "pred", "prediction"):
+            if key in output and torch.is_tensor(output[key]):
+                return output[key]
+        for value in output.values():
+            if torch.is_tensor(value):
+                return value
+            if isinstance(value, (list, tuple, dict)):
+                try:
+                    return unwrap_logits(value)
+                except TypeError:
+                    continue
+
+    if isinstance(output, (list, tuple)):
+        for item in output:
+            if torch.is_tensor(item):
+                return item
+            if isinstance(item, (list, tuple, dict)):
+                try:
+                    return unwrap_logits(item)
+                except TypeError:
+                    continue
+
+    raise TypeError(f"Unsupported model output type for logits extraction: {type(output)}")
+
+
+def split_logits_features(output):
+    """Return `(logits, feature)` when possible, with graceful fallback."""
+    if torch.is_tensor(output):
+        return output, None
+
+    if isinstance(output, dict):
+        logits = unwrap_logits(output)
+        feature = None
+        for key in ("feature", "features", "feat", "feats"):
+            if key in output and torch.is_tensor(output[key]):
+                feature = output[key]
+                break
+        return logits, feature
+
+    if isinstance(output, (list, tuple)):
+        logits = unwrap_logits(output)
+        feature = None
+        if len(output) >= 2 and torch.is_tensor(output[1]):
+            feature = output[1]
+        return logits, feature
+
+    raise TypeError(f"Unsupported model output type for split: {type(output)}")
+
+
 def group_weight_decay(model):
 
     import torch.nn as nn

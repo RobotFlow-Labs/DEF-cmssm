@@ -12,9 +12,9 @@ def calcTime():
     # from model_others.RGB_T.CMX.models.builder import EncoderDecoder
     from model_others.RGB_T.CLNet_T import Teacher
     from model_others.RGB_T.CAINet import mobilenetGloRe3_CRRM_dule_arm_bou_att
-    from proposed.model1 import Model
+    from models.model1 import Model
     from model_others.RGB_T.SGFNet.SGFNet import SGFNet
-    # from proposed.model1 import model
+    # from models.model1 import model
 
 
     cudnn.benchmark = True

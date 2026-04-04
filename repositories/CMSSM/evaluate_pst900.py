@@ -11,12 +11,20 @@ import torch.nn.functional as F
 from toolbox import get_dataset
 from toolbox import get_model
 from toolbox.metrics_KP import averageMeter, runningScore
-from toolbox import class_to_RGB, load_ckpt, save_ckpt
+from toolbox import class_to_RGB, unwrap_logits
 
 # from toolbox.datasets.pst900 import PST900
 from toolbox.datasets.pst900 import PST900
 
-def evaluate(logdir, save_predict=True, options=['val', 'test', 'test_day', 'test_night'], prefix=''):
+
+def _resolve_model_weight(logdir, model_weight):
+    weight_path = model_weight or os.path.join(logdir, "model.pth")
+    if not os.path.exists(weight_path):
+        raise FileNotFoundError(f"Model weight not found: {weight_path}")
+    return weight_path
+
+
+def evaluate(logdir, model_weight="", save_predict=True, options=['val', 'test', 'test_day', 'test_night'], prefix=''):
     # 加载配置文件cfg
     cfg = None
     for file in os.listdir(logdir):
@@ -25,7 +33,7 @@ def evaluate(logdir, save_predict=True, options=['val', 'test', 'test_day', 'tes
                 cfg = json.load(fp)
     assert cfg is not None
 
-    device = torch.device('cuda:1')
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     loaders = []
     for opt in options:
@@ -34,7 +42,8 @@ def evaluate(logdir, save_predict=True, options=['val', 'test', 'test_day', 'tes
         cmap = dataset.cmap
 
     model = get_model(cfg).to(device)
-    model.load_state_dict(torch.load("/home/ubuntu/code/wild/run/pst900/model.pth", map_location='cuda'))
+    weight_path = _resolve_model_weight(logdir, model_weight)
+    model.load_state_dict(torch.load(weight_path, map_location=device), strict=False)
     running_metrics_val = runningScore(cfg['n_classes'], ignore_index=cfg['id_unlabel'])
     time_meter = averageMeter()
 
@@ -54,12 +63,12 @@ def evaluate(logdir, save_predict=True, options=['val', 'test', 'test_day', 'tes
                 if cfg['inputs'] == 'rgb':
                     image = sample['image'].to(device)
                     label = sample['label'].to(device)
-                    predict = model(image)
+                    predict = unwrap_logits(model(image))
                 else:
                     image = sample['image'].to(device)
                     thermal = sample['thermal'].to(device)
                     label = sample['label'].to(device)
-                    predict = model(image, thermal)
+                    predict = unwrap_logits(model(image, thermal))
                     # print(predict.shape)
                 predict = predict.max(1)[1].cpu().numpy()  # [1, h, w]
                 label = label.cpu().numpy()
@@ -96,8 +105,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="evaluate")
     parser.add_argument("-s", type=bool, default=True, help="save predict or not")
-    parser.add_argument("--logdir", type=str, default="/home/ubuntu/code/wild/run/pst900",
+    parser.add_argument("--logdir", type=str, default="run",
                         help="run logdir")
+    parser.add_argument("--model_weight", type=str, default="")
     args = parser.parse_args()
-    evaluate(args.logdir, save_predict=args.s, options=['test'], prefix='20')
-
+    evaluate(args.logdir, model_weight=args.model_weight, save_predict=args.s, options=['test'], prefix='20')

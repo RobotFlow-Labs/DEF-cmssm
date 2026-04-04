@@ -1,26 +1,29 @@
 # NEXT_STEPS — DEF-cmssm
 ## Last Updated: 2026-04-04
-## Status: ENRICHED — Ready for build
-## MVP Readiness: 0%
+## Status: SCAFFOLDING STARTED — PRD + task slices generated
+## MVP Readiness: 10%
 ## Total PRDs: 11 (72 hours estimated)
 ## Critical Path: PRD-001 → PRD-002 → PRD-003 → PRD-005 → PRD-006
 
 ---
 
 ### Immediate Next Actions
-1. Clone repo: `git clone https://github.com/xiaodonguo/CMSSM.git`
-2. Create uv env: `uv venv .venv --python 3.10`
-3. Install PyTorch cu128
-4. **Install mamba-ssm 1.0.1** (CRITICAL — requires CUDA compilation of selective_scan_fn)
-5. **Install causal-conv1d 1.0.0** (CRITICAL — fast 1D causal conv for Mamba)
-6. Install mmcv 2.2.0, timm, einops, fvcore, ptflops
-7. Download EfficientViT-B1 + ConvNeXtV2-atto backbone weights
-8. Download 4 CM-SSM pre-trained checkpoints from releases v1.0.1
-9. Download 4 datasets (FMB, PST900, CART, SUS)
-10. Fix absolute paths in encoder files (hardcoded /home/ubuntu/ paths)
-11. Fix import paths (`proposed.` → `models.`)
-12. Stub comparison method imports (CMX, MAINet, MDNet, sigma)
-13. Run evaluation on all 4 datasets — reproduce paper results
+1. Create uv env: `uv venv .venv --python 3.11`
+2. Install PyTorch cu128
+3. **Install mamba-ssm 1.0.1** (CRITICAL — requires CUDA compilation of selective_scan_fn)
+4. **Install causal-conv1d 1.0.0** (CRITICAL — fast 1D causal conv for Mamba)
+5. Install mmcv 2.2.0, timm, einops, fvcore, ptflops
+6. Execute TASK-002 portability patch pass on `repositories/CMSSM` (imports + paths)
+7. Expand dataset registry to include FMB/SUS and unify eval/train config handling
+8. Run evaluation on all 4 datasets — reproduce paper results
+
+### Scaffold Progress (2026-04-04)
+- [x] Full project PRD created (`PRD.md`)
+- [x] Task slicing completed (`tasks/slices/TASK-001..010`)
+- [x] Python package scaffold created (`pyproject.toml`, `src/def_cmssm`)
+- [x] Autopilot entrypoint scaffolded (`scripts/anima_autopilot.py`)
+- [x] Kernel scaffold files created (`kernels/cuda/*`)
+- [x] Benchmark templates created (`benchmarks/templates/*`)
 
 ### What This Module Does
 CM-SSM uses Mamba state space models for cross-modal RGB-T feature fusion. The key innovation is `SS2D_rgbt` which interleaves RGB and thermal tokens into a single sequence and processes them jointly through a 4-directional selective scan (Mamba S6). This achieves O(N) complexity vs O(N²) for transformer attention, enabling efficient fusion of long visual sequences. Uses dual-stream backbones (EfficientViT or ConvNeXtV2) with CM-SSM fusion at 4 stages. Same author as DEF-tuni — designed as the accuracy-focused complement to TUNI's speed focus. IROS 2025 paper with journal extension at IEEE TASE adding terrain-specific knowledge distillation.

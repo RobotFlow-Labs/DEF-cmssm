@@ -201,7 +201,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description="config")
-    parser.add_argument("--config", type=str, default="/root/autodl-tmp/code/wild/configs/PST900.json", help="Configuration file to use")
+    parser.add_argument("--config", type=str, default="configs/PST900.json", help="Configuration file to use")
     parser.add_argument("--opt_level", type=str, default='O1')
     parser.add_argument("--inputs", type=str.lower, default='rgb', choices=['rgb', 'rgbt'])
     parser.add_argument("--resume", type=str, default='',

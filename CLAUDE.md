@@ -189,3 +189,7 @@ CM-SSM brings **linear-complexity** cross-modal fusion to RGB-T segmentation —
 ## Python: >= 3.10
 ## Torch: cu128 index
 ## Git prefix: [DEF-cmssm]
+
+## Reference Implementation
+Source code at: repositories/CMSSM/
+Read ALL files in repositories/CMSSM/ before building. This is the paper's reference implementation.

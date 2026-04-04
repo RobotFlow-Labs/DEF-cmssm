@@ -1,11 +1,11 @@
 import torch
 import torch.nn as nn
-from backbone.covnextV2.convnextv2 import convnextv2_atto
-from backbone.covnextV2.convnextv2 import convnextv2_femto
-from backbone.covnextV2.convnextv2 import convnextv2_pico
-from backbone.covnextV2.convnextv2 import convnextv2_nano
-from backbone.covnextV2.convnextv2 import convnextv2_tiny
-from backbone.covnextV2.convnextv2 import convnextv2_base
+from backbone.convnextV2.convnextv2 import convnextv2_atto
+from backbone.convnextV2.convnextv2 import convnextv2_femto
+from backbone.convnextV2.convnextv2 import convnextv2_pico
+from backbone.convnextV2.convnextv2 import convnextv2_nano
+from backbone.convnextV2.convnextv2 import convnextv2_tiny
+from backbone.convnextV2.convnextv2 import convnextv2_base
 
 
 class Encoder_ConvNeXt(nn.Module):

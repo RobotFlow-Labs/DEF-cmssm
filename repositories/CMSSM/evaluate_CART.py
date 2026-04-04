@@ -7,10 +7,17 @@ import json
 import torch
 from torch.utils.data import DataLoader
 from toolbox.metrics_CART import averageMeter, runningScore
-from toolbox import class_to_RGB, get_model
+from toolbox import class_to_RGB, get_model, unwrap_logits
 from toolbox.datasets.wild import Wild
 
-def evaluate(logdir, save_predict=False, options=['val', 'test', 'test_day', 'test_night'], prefix=''):
+def _resolve_model_weight(logdir, model_weight):
+    weight_path = model_weight or os.path.join(logdir, "model.pth")
+    if not os.path.exists(weight_path):
+        raise FileNotFoundError(f"Model weight not found: {weight_path}")
+    return weight_path
+
+
+def evaluate(logdir, model_weight="", save_predict=False, options=['val', 'test', 'test_day', 'test_night'], prefix=''):
     # 加载配置文件cfg
     cfg = None
     for file in os.listdir(logdir):
@@ -19,7 +26,7 @@ def evaluate(logdir, save_predict=False, options=['val', 'test', 'test_day', 'te
                 cfg = json.load(fp)
     assert cfg is not None
 
-    device = torch.device('cuda:0')
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     loaders = []
     for opt in options:
@@ -28,7 +35,8 @@ def evaluate(logdir, save_predict=False, options=['val', 'test', 'test_day', 'te
         cmap = dataset.cmap
 
     model = get_model(cfg).to(device)
-    model.load_state_dict(torch.load("/home/ubuntu/code/wild/run/2025-03-03-20-18(CART_Lake-model1_b1_CM-SSM)/model.pth", map_location='cuda'), strict=False)
+    weight_path = _resolve_model_weight(logdir, model_weight)
+    model.load_state_dict(torch.load(weight_path, map_location=device), strict=False)
     running_metrics_val = runningScore(cfg['n_classes'], ignore_index=None)
     time_meter = averageMeter()
     save_path = os.path.join('./result/train_on_lake', 'lake', prefix)
@@ -50,7 +58,7 @@ def evaluate(logdir, save_predict=False, options=['val', 'test', 'test_day', 'te
                     image = sample['image'].to(device)
                     thermal = sample['thermal'].to(device)
                     label = sample['label'].to(device)
-                    predict = model(image, thermal)
+                    predict = unwrap_logits(model(image, thermal))
 
                 predict = predict.max(1)[1].cpu().numpy()  # [1, h, w] 按照第一个维度求最大值，并返回最大值对应的索引
                 label = label.cpu().numpy()
@@ -62,7 +70,8 @@ def evaluate(logdir, save_predict=False, options=['val', 'test', 'test_day', 'te
                     predict = predict.squeeze(0)  # [1, h, w] -> [h, w]
                     predict = class_to_RGB(predict, N=len(cmap), cmap=cmap)  # 如果数据集没有给定cmap,使用默认cmap
                     predict = Image.fromarray(predict)
-                    predict.save(os.path.join(save_path, sample['label_path'][0]))
+                    label_name = sample['label_path'][0] if isinstance(sample['label_path'], list) else sample['label_path']
+                    predict.save(os.path.join(save_path, label_name))
 
         metrics = running_metrics_val.get_scores()
         print('overall metrics .....')
@@ -86,7 +95,8 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description="evaluate")
-    parser.add_argument("--logdir", type=str, default="/home/ubuntu/code/wild/run/2025-03-03-20-18(CART_Lake-model1_b1_CM-SSM)")
+    parser.add_argument("--logdir", type=str, default="run")
+    parser.add_argument("--model_weight", type=str, default="")
     parser.add_argument("-s", type=bool, default=True, help="save predict or not")
     args = parser.parse_args()
-    evaluate(args.logdir, save_predict=args.s, options=['test'], prefix='')
+    evaluate(args.logdir, model_weight=args.model_weight, save_predict=args.s, options=['test'], prefix='')

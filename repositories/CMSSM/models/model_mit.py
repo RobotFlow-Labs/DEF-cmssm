@@ -1,11 +1,11 @@
 import torch
 import torch.nn as nn
-from proposed.encoder.Segformer import Encoder_Segformer
-from proposed.encoder.Segformer import Encoder_RGBT_Segformer
-from proposed.decoder.MLP import Decoder_MLP
+from models.encoder.Segformer import Encoder_Segformer
+from models.encoder.Segformer import Encoder_RGBT_Segformer
+from models.decoder.MLP import Decoder_MLP
 import torch.nn.functional as F
-from proposed.fuison_strategy.fusion import Fusion_Module
-from proposed.decoder.DeepLabV3 import DeepLabHeadV3Plus
+from models.fuison_strategy.fusion import Fusion_Module
+from models.decoder.DeepLabV3 import DeepLabHeadV3Plus
 
 class Model(nn.Module):
     def __init__(self, mode, inputs, n_class=12, num_heads=[1, 2, 4, 8], norm_fuse=nn.BatchNorm2d, fusion_mode='max'):

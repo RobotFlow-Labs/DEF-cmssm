@@ -1,0 +1,5 @@
+kernel,baseline_ms,optimized_ms,speedup,mem_before_mb,mem_after_mb,tolerance_passed,notes
+cm_interleave,,,,,,,
+cm_ss2d_fused,,,,,,,
+cm_ssm_block,,,,,,,
+dual_stream_batch,,,,,,,

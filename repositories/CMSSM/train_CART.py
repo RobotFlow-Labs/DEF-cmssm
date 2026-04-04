@@ -174,7 +174,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description="config")
-    parser.add_argument("--config", type=str, default="/home/ubuntu/code/wild/configs/CART.json", help="Configuration file to use")
+    parser.add_argument("--config", type=str, default="configs/CART.json", help="Configuration file to use")
     parser.add_argument("--opt_level", type=str, default='O1')
     parser.add_argument("--inputs", type=str.lower, default='rgbt', choices=['rgb', 'rgbt', 't'])
     parser.add_argument("--resume", type=str, default='',

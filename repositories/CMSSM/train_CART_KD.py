@@ -18,7 +18,7 @@ from Loss.KD_Loss.Logits.KLD import kld_loss
 from Loss.KD_loss import kd_ce_loss
 from Loss.KD_Loss.Feature.MSE import MSELoss
 from Loss.KD_Loss.Feature.CWD import FeatureLoss
-from toolbox import setup_seed
+from toolbox import setup_seed, unwrap_logits, split_logits_features
 from Loss.dice import DiceLoss
 setup_seed(33)
 
@@ -97,18 +97,26 @@ def run(args):
     print('Flops ' + flops)
     print('Params ' + params)
 
-    teacher_lake = get_model(cfg).to(gpu_ids[0])
-    teacher_river =  get_model(cfg).to(gpu_ids[0])
-    teacher_coast = get_model(cfg).to(gpu_ids[0])
-    teacher_ground = get_model(cfg).to(gpu_ids[0])
-    teacher_lake.load_state_dict(torch.load(
-        "/run/TCSVT/KD/EfficientVit/2025-05-16-18-59(CART_Terrain-Lake-model1_b1_CM-SSM)/model.pth"))
-    teacher_river.load_state_dict(torch.load(
-        "/run/TCSVT/KD/EfficientVit/2025-05-16-17-50(CART_Terrain-River-model1_b1_CM-SSM)/model.pth"))
-    teacher_coast.load_state_dict(torch.load(
-        "/run/TCSVT/KD/EfficientVit/2025-05-16-20-57(CART_Terrain-Coast-model1_b1_CM-SSM)/model.pth"))
-    teacher_ground.load_state_dict(torch.load(
-        "/run/TCSVT/KD/EfficientVit/2025-05-16-20-58(CART_Terrain-Ground-model1_b1_CM-SSM)/model.pth"))
+    teacher_paths = {
+        "lake": args.teacher_lake,
+        "river": args.teacher_river,
+        "coast": args.teacher_coast,
+        "ground": args.teacher_ground,
+    }
+    has_teachers = all(path and os.path.exists(path) for path in teacher_paths.values())
+
+    teacher_lake = teacher_river = teacher_coast = teacher_ground = None
+    if has_teachers:
+        teacher_lake = get_model(cfg).to(gpu_ids[0])
+        teacher_river = get_model(cfg).to(gpu_ids[0])
+        teacher_coast = get_model(cfg).to(gpu_ids[0])
+        teacher_ground = get_model(cfg).to(gpu_ids[0])
+        teacher_lake.load_state_dict(torch.load(teacher_paths["lake"], map_location=f"cuda:{gpu_ids[0]}"), strict=False)
+        teacher_river.load_state_dict(torch.load(teacher_paths["river"], map_location=f"cuda:{gpu_ids[0]}"), strict=False)
+        teacher_coast.load_state_dict(torch.load(teacher_paths["coast"], map_location=f"cuda:{gpu_ids[0]}"), strict=False)
+        teacher_ground.load_state_dict(torch.load(teacher_paths["ground"], map_location=f"cuda:{gpu_ids[0]}"), strict=False)
+    else:
+        logger.warning("KD teacher checkpoints not fully provided. Falling back to self-distillation logits.")
 
     # dataloader
     trainset, _, testset1 = get_dataset(cfg)
@@ -136,10 +144,11 @@ def run(args):
 
         # training
         student.train()
-        teacher_lake.eval()
-        teacher_coast.eval()
-        teacher_river.eval()
-        teacher_ground.eval()
+        if has_teachers:
+            teacher_lake.eval()
+            teacher_coast.eval()
+            teacher_river.eval()
+            teacher_ground.eval()
         train_loss_meter.reset()
         for i, sample in enumerate(train_loader):
             optimizer.zero_grad()  # 梯度清零
@@ -152,14 +161,26 @@ def run(args):
 
             with amp.autocast():
                 if cfg['inputs'] == 't':
-                    predict = student(thermal)
+                    predict_student, f_s = split_logits_features(student(thermal))
+                    predict_lake = predict_student.detach()
+                    predict_river = predict_student.detach()
+                    predict_coast = predict_student.detach()
+                    predict_ground = predict_student.detach()
+                    f_lake = f_river = f_coast = f_ground = None
                 else:
-                    with torch.no_grad():
-                        predict_lake, f_lake = teacher_lake(image, thermal)
-                        predict_river, f_river = teacher_river(image, thermal)
-                        predict_coast, f_coast = teacher_coast(image, thermal)
-                        predict_ground, f_ground = teacher_ground(image, thermal)
-                    predict_student, f_s = student(image, thermal)
+                    predict_student, f_s = split_logits_features(student(image, thermal))
+                    if has_teachers:
+                        with torch.no_grad():
+                            predict_lake, f_lake = split_logits_features(teacher_lake(image, thermal))
+                            predict_river, f_river = split_logits_features(teacher_river(image, thermal))
+                            predict_coast, f_coast = split_logits_features(teacher_coast(image, thermal))
+                            predict_ground, f_ground = split_logits_features(teacher_ground(image, thermal))
+                    else:
+                        predict_lake = predict_student.detach()
+                        predict_river = predict_student.detach()
+                        predict_coast = predict_student.detach()
+                        predict_ground = predict_student.detach()
+                        f_lake = f_river = f_coast = f_ground = None
                 loss = train_criterion(predict_student, targets, predict_lake, predict_river, predict_coast, predict_ground, f_lake, f_river, f_coast, f_ground, f_s)
             Scaler.scale(loss).backward()
             Scaler.step(optimizer)
@@ -180,9 +201,9 @@ def run(args):
                 thermal = sample['thermal'].cuda()
                 label = sample['label'].cuda()
                 if cfg['inputs'] == 't':
-                    predict = student(thermal)
+                    predict = unwrap_logits(student(thermal))
                 else:
-                    predict = student(image, thermal)[0]
+                    predict = unwrap_logits(student(image, thermal))
 
                 loss = criterion(predict, label)
                 test_loss_meter.update(loss.item())
@@ -221,13 +242,17 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description="config")
-    parser.add_argument("--config", type=str, default="/home/ubuntu/code/wild/configs/CART.json", help="Configuration file to use")
+    parser.add_argument("--config", type=str, default="configs/CART.json", help="Configuration file to use")
     parser.add_argument("--opt_level", type=str, default='O1')
     parser.add_argument("--inputs", type=str.lower, default='rgbt', choices=['rgb', 'rgbt', 't'])
     parser.add_argument("--resume", type=str, default='',
                         help="use this file to load last checkpoint for continuing training")
     parser.add_argument("--gpu_ids", type=str, default='0', help="set cuda device id")
     parser.add_argument("--备注", type=str, default="", help="记录配置和对照组")
+    parser.add_argument("--teacher_lake", type=str, default="", help="checkpoint path for lake teacher")
+    parser.add_argument("--teacher_river", type=str, default="", help="checkpoint path for river teacher")
+    parser.add_argument("--teacher_coast", type=str, default="", help="checkpoint path for coast teacher")
+    parser.add_argument("--teacher_ground", type=str, default="", help="checkpoint path for ground teacher")
 
     args = parser.parse_args()
 

@@ -5,7 +5,7 @@ from models.encoder.Efficientvit import Encoder_RGBT_Efficientvit
 from models.decoder.MLP import Decoder_MLP
 from models.decoder.MLP_plus import Decoder_MLP_plus
 import torch.nn.functional as F
-# from proposed.fuison_strategy.base_fusion import Fusion_Module
+# from models.fuison_strategy.base_fusion import Fusion_Module
 from models.fuison_strategy.fusion import Fusion_Module
 from models.decoder.DeepLabV3 import DeepLabHeadV3Plus
 

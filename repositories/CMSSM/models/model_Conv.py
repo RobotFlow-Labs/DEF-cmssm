@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
-from proposed.encoder.ConvNeXtV2 import Encoder_ConvNeXt
-from proposed.encoder.ConvNeXtV2 import Encoder_RGBT_ConvNeXt
-from proposed.decoder.MLP import Decoder_MLP
+from models.encoder.ConvNeXtV2 import Encoder_ConvNeXt
+from models.encoder.ConvNeXtV2 import Encoder_RGBT_ConvNeXt
+from models.decoder.MLP import Decoder_MLP
 import torch.nn.functional as F
-from proposed.fuison_strategy.fusion import Fusion_Module
+from models.fuison_strategy.fusion import Fusion_Module
 
 
 class Model(nn.Module):
