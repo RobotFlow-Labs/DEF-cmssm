@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  cmssm:
+    build:
+      context: .
+      dockerfile: Dockerfile.serve
+    env_file: .env.serve
+    volumes:
+      - ${ANIMA_WEIGHT_DIR:-/data/weights}:/data/weights
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    network_mode: host
+    profiles:
+      - serve
+      - ros2
+      - api
+
+  cmssm-api:
+    extends:
+      service: cmssm
+    environment:
+      - ANIMA_ROS2_ENABLED=false
+    profiles:
+      - api
+
+  cmssm-test:
+    extends:
+      service: cmssm
+    command: ["python", "-m", "pytest", "tests/", "-x", "-v"]
+    profiles:
+      - test

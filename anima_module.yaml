@@ -1,0 +1,49 @@
+name: def-cmssm
+version: "0.1.0"
+description: "CM-SSM: Cross-Modal State Space Modeling for RGB-T Semantic Segmentation"
+paper: "https://arxiv.org/abs/2506.17869"
+domain: rgb-t-segmentation
+product_stack:
+  - ORACLE
+  - ATLAS
+  - NEMESIS
+
+capabilities:
+  - rgb_thermal_segmentation
+  - cross_modal_fusion
+  - mamba_state_space
+
+api:
+  predict:
+    input:
+      rgb: "image/png"
+      thermal: "image/png"
+    output:
+      segmentation: "image/png"
+      classes: "application/json"
+
+docker:
+  base_image: "ghcr.io/robotflow-labs/anima-serve:jazzy"
+  gpu_required: true
+  min_vram_mb: 2048
+
+ros2:
+  node_name: cmssm_node
+  subscribers:
+    - topic: /rgb/image_raw
+      type: sensor_msgs/msg/Image
+    - topic: /thermal/image_raw
+      type: sensor_msgs/msg/Image
+  publishers:
+    - topic: /segmentation/image
+      type: sensor_msgs/msg/Image
+    - topic: /segmentation/classes
+      type: std_msgs/msg/String
+
+weights:
+  hf_repo: "ilessio-aiflowlab/DEF-cmssm"
+  formats:
+    - safetensors
+    - onnx
+    - trt_fp16
+    - trt_fp32

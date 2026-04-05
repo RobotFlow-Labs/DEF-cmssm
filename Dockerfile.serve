@@ -1,0 +1,41 @@
+# DEF-cmssm — CM-SSM RGB-T Semantic Segmentation
+# Layer 3: Module-specific (on top of anima-serve)
+FROM ghcr.io/robotflow-labs/anima-serve:jazzy AS base
+
+LABEL maintainer="AIFLOW LABS <dev@robotflowlabs.com>"
+LABEL module="def-cmssm"
+LABEL version="0.1.0"
+
+WORKDIR /app
+
+# Install module Python dependencies
+COPY pyproject.toml .
+RUN uv pip install --system \
+    mamba-ssm \
+    causal-conv1d \
+    timm \
+    einops \
+    opencv-python-headless \
+    safetensors
+
+# Copy module code
+COPY src/ src/
+COPY repositories/CMSSM/ repositories/CMSSM/
+COPY configs/ configs/
+COPY anima_module.yaml .
+
+# Set environment
+ENV ANIMA_MODULE_NAME=def-cmssm
+ENV ANIMA_MODULE_VERSION=0.1.0
+ENV ANIMA_SERVE_PORT=8080
+ENV ANIMA_DATASET=pst900
+ENV CMSSM_WEIGHTS_DIR=/data/weights/backbone
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+    CMD curl -f http://localhost:${ANIMA_SERVE_PORT}/health || exit 1
+
+EXPOSE ${ANIMA_SERVE_PORT}
+
+# Entrypoint
+CMD ["python", "-m", "anima_serve.cli", "--module", "def_cmssm.serve:CMSSMNode"]
